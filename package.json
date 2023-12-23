@@ -1,0 +1,15 @@
+{
+  "name": "pogos-task",
+  "engines": {
+    "node": "20.9.0",
+    "npm": "10.1.0"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
