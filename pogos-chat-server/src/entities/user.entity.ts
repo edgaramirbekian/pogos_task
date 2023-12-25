@@ -10,7 +10,7 @@ interface IUser {
   jwt: string;
 }
 
-export let allUsers = new Map<string, User>();
+export const allUsers = new Map<string, User>();
 
 export const hashPassword = async (password: string): Promise<string> => {
   const salt = await bcrypt.genSalt();
@@ -48,7 +48,10 @@ export class User implements IUser {
 
 type userFactory = User | null;
 
-export const userFactory = async (username: string, password: string): Promise<userFactory> => {
+export const userFactory = async (
+  username: string,
+  password: string,
+): Promise<userFactory> => {
   if (!allUsers.has(username)) {
     const passHash = await hashPassword(password);
     const newUser = new User(username, passHash);

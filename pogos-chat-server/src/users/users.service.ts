@@ -1,13 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { User, userFactory, allUsers } from 'src/entities/user.entity';
 
 @Injectable()
 export class UsersService {
   async create(username: string, password: string) {
     if (allUsers.has(username)) {
-      const user: User = allUsers.get(username);
-      user.isLoggedIn = true;
-      return user;
+      throw new ForbiddenException();
     } else {
       const newUser: User = await userFactory(username, password);
       return newUser;

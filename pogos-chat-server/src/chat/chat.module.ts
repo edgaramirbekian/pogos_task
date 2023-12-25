@@ -4,5 +4,6 @@ import { ChatGateway } from './chat.gateway';
 
 @Module({
   providers: [ChatGateway, ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

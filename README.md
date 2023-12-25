@@ -1,73 +1,59 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Pogos Chat Assesment with ReactJS and NestJS
+**Objective:**
+The objective of this assignment is to create a chat application with real-time messaging using
+Nest.js as the backend framework.
+**Requirements:**
+Frontend (React.js and TypeScript):
+1. Create a React.js application with the following components:
+- ChatRoom: Display a chat room where users can send and receive messages.
+- ChatInput: Allow users to enter and send messages.
+2. Implement basic state management within components (without using a state management
+library).
+3. Implement real-time messaging using WebSocket (you can use libraries like Socket.io or
+plain WebSockets).
+4. Allow users to enter a username before joining the chat.
+5. Display sent and received messages with a timestamp.
+6. Use TypeScript for type safety.
+Backend (Nest.js, TypeScript, WebSocket):
+1. Create a Nest.js application for the server.
+2. Implement WebSocket support for real-time communication between clients using Nest.js
+WebSockets.
+3. Store chat messages in-memory (no need for a database).
+4. Implement basic user authentication with the ability to choose a username.
+5. Use TypeScript for type safety in your server code.
+General Guidelines:
+- Use a simplified folder structure for the frontend and backend code.
+- Provide basic instructions on how to run the application locally.
+- Keep the code organized and readable, focusing on the core features.
+**Bonus (Optional):**
+- Add user avatars or profile pictures.
+- Implement message history so that users can see previous messages upon joining the chat.
+- Implement basic error handling for failed messages.
+**Submission:**
+The candidate should submit the assignment as a GitHub repository with a README.md file
+that explains how to run the application. Include any additional notes about their
+implementation
 
 ## Installation
 
 ```bash
+$ cd ./pogos-chat-client
+$ npm install
+```
+```bash
+$ cd ./pogos-chat-server
 $ npm install
 ```
 
 ## Running the app
 
 ```bash
-# development
+$ cd ./pogos-chat-client
 $ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
-
-## Test
-
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+$ cd ./pogos-chat-server
+$ npm run start
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).

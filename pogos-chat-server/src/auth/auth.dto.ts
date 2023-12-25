@@ -24,3 +24,24 @@ export class LogOutDTO {
   @IsString()
   username: string;
 }
+
+export class WsAuthData {
+  @IsNotEmpty()
+  @IsString()
+  jwtToken: string;
+
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @IsString()
+  event: string;
+
+  // @IsNotEmpty()
+  // @IsString()
+  // chatId: string;
+}

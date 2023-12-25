@@ -1,5 +1,4 @@
-import { User } from "./user.entity";
-import { Message } from "./message.entity";
+import { Message } from './message.entity';
 import { randomBytes } from 'crypto';
 
 interface IChat {
@@ -13,6 +12,8 @@ interface IChat {
   swapOwner(username: string): boolean;
 }
 
+let chatObject: Chat = null;
+
 export class Chat implements IChat {
   id: string;
   messages: Array<Message> = new Array<Message>();
@@ -20,9 +21,13 @@ export class Chat implements IChat {
   dateCreated: Date;
   peers: Array<string> = new Array<string>();
   constructor(ownerUsername: string) {
+    if (chatObject) {
+      return chatObject;
+    }
     this.id = randomBytes(16).toString('hex');
     this.dateCreated = new Date();
     this.peers.push(ownerUsername);
+    chatObject = this;
   }
 
   addMessage(content: Message): boolean {
@@ -35,8 +40,19 @@ export class Chat implements IChat {
     return true;
   }
 
-  swapOwner(username: string): boolean {
-    this.owner = username;
+  removePeer(peerUsername: string): boolean {
+    this.peers.filter((item) => {
+      return item !== peerUsername;
+    });
+    return true;
+  }
+
+  swapOwner(newUsername: string): boolean {
+    this.owner = newUsername;
     return true;
   }
 }
+
+export const getChat = (): Chat => {
+  return chatObject;
+};
