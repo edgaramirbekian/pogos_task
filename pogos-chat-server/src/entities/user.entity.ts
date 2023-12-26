@@ -1,13 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
-import { JwtService } from '@nestjs/jwt';
 
 interface IUser {
   id: string;
   username: string;
   passwordHash: string;
   isLoggedIn: boolean;
-  jwt: string;
 }
 
 export const allUsers = new Map<string, User>();
@@ -17,16 +15,6 @@ export const hashPassword = async (password: string): Promise<string> => {
   const hash = await bcrypt.hash(password, salt);
   return hash;
 };
-
-// export const authorizeUser = async (username: string, password: string): Promise<boolean> => {
-//   const user: User = allUsers.get(username);
-//   if (user) {
-//     if (await bcrypt.compare(password, user.passwordHash)) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
 
 export class User implements IUser {
   id: string;

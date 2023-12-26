@@ -18,7 +18,7 @@ export class AuthController {
 
   // @HttpCode(HttpStatus.OK)
   @Post('signin')
-  signIn(@Body() signInDto: SignInDTO) {
+  signIn(@Body() signInDto: SignInDTO): Promise<any> {
     return this.authService.signIn(
       signInDto.username,
       signInDto.password,
@@ -27,13 +27,13 @@ export class AuthController {
   }
 
   @Post('signup')
-  signUp(@Body() signInDto: SignInDTO) {
+  signUp(@Body() signInDto: SignInDTO): Promise<any> {
     return this.authService.signUp(signInDto.username, signInDto.password);
   }
 
   @UseGuards(AuthGuard)
   @Get('logout')
-  logOut(@Req() request: Request) {
+  logOut(@Req() request: Request): boolean {
     return this.authService.logOut(request['user'].username);
   }
 }

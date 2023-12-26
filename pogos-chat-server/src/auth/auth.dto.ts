@@ -3,11 +3,13 @@ import {
   IsNotEmpty,
   IsString,
   Matches,
+  MaxLength,
 } from '@nestjs/class-validator';
 
 export class SignInDTO {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(20)
   username: string;
 
   @IsNotEmpty()
@@ -19,13 +21,13 @@ export class SignInDTO {
   password: string;
 }
 
-export class LogOutDTO {
-  @IsNotEmpty()
-  @IsString()
-  username: string;
-}
+// export class LogOutDTO {
+//   @IsNotEmpty()
+//   @IsString()
+//   username: string;
+// }
 
-export class WsAuthData {
+export class WsData {
   @IsNotEmpty()
   @IsString()
   jwtToken: string;
@@ -34,14 +36,15 @@ export class WsAuthData {
   @IsString()
   username: string;
 
-  @IsNotEmpty()
   @IsString()
-  id: string;
-
-  @IsString()
-  event: string;
+  event?: string;
 
   // @IsNotEmpty()
   // @IsString()
   // chatId: string;
+}
+
+export class WsAuthData {
+  @IsNotEmpty()
+  auth: WsData;
 }

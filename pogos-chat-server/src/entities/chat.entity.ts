@@ -1,5 +1,5 @@
-import { Message } from './message.entity';
 import { randomBytes } from 'crypto';
+import { Message } from './message.entity';
 
 interface IChat {
   id: string;
@@ -26,6 +26,7 @@ export class Chat implements IChat {
     }
     this.id = randomBytes(16).toString('hex');
     this.dateCreated = new Date();
+    this.owner = ownerUsername;
     this.peers.push(ownerUsername);
     chatObject = this;
   }

@@ -1,3 +1,5 @@
+import { Socket } from 'socket.io';
+import { Request } from 'express';
 import {
   CanActivate,
   ExecutionContext,
@@ -5,10 +7,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-// import { jwtConstants } from './constants';
-import { Request } from 'express';
-import { User, allUsers } from 'src/entities/user.entity';
 import { WsAuthData } from './auth.dto';
+import { User, allUsers } from 'src/entities/user.entity';
 import { getChat } from 'src/entities/chat.entity';
 
 @Injectable()
@@ -17,6 +17,7 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
+      console.log('AuthGuard');
       const request = context.switchToHttp().getRequest();
       const token = this.extractTokenFromHeader(request);
       if (!token) {
@@ -50,24 +51,36 @@ export class AuthGuard implements CanActivate {
 
 @Injectable()
 export class WsGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService) {
+    console.log('WsGuard constructor');
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      const wsReq = context.switchToWs().getData<WsAuthData>();
-      const jwtToken: string = wsReq.jwtToken;
-      const clientUsername: string = wsReq.username;
-      const clientId: string = wsReq.id;
+      console.log('WsGuard');
+      const wsReq: WsAuthData = context.switchToWs().getData<WsAuthData>();
+      const client: Socket = context.switchToWs().getClient<Socket>();
+      console.log('WsGuard wsReq:', client.handshake);
+      const query = client.handshake.query;
+      const token: string = client.handshake.auth.jwtToken;
+      console.log('WsGuard query:', query);
+      console.log('WsGuard wsReq:', wsReq);
+      console.log('WsGuard client:', client);
+      console.log('WsGuard token:', token);
+      const jwtToken: string = wsReq.auth.jwtToken;
+      console.log('WsGuard jwtToken:', jwtToken);
+      const clientUsername: string = wsReq.auth.username;
       // const chatId: string = wsReq.chatId;
       const payload = await this.jwtService.verifyAsync(jwtToken, {
         secret: process.env.JWT_KEY,
       });
       if (allUsers.has(payload.username)) {
         const user: User = allUsers.get(payload.username);
-        if (user.id == clientId && user.username == clientUsername) {
+        if (user.username == clientUsername) {
           return true;
         } else if (
-          wsReq.event == 'disconnect' &&
+          wsReq.auth.event &&
+          wsReq.auth.event == 'disconnect' &&
           getChat() &&
           getChat().owner == user.username
         ) {

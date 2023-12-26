@@ -3,7 +3,7 @@ import { User, userFactory, allUsers } from 'src/entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  async create(username: string, password: string) {
+  async create(username: string, password: string): Promise<User> {
     if (allUsers.has(username)) {
       throw new ForbiddenException();
     } else {
@@ -16,18 +16,11 @@ export class UsersService {
     return allUsers;
   }
 
-  findOne(username: string) {
+  findOne(username: string): User {
     return allUsers.get(username);
   }
 
-  // update(username: string, newUsername: string) {
-  //   const user: User = allUsers.get(username);
-  //   allUsers.delete(username);
-  //   allUsers.set(newUsername, user);
-  //   return allUsers[newUsername];
-  // }
-
-  remove(username: string) {
+  remove(username: string): boolean {
     return allUsers.delete(username);
   }
 }

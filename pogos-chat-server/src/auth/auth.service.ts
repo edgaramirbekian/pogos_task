@@ -1,14 +1,15 @@
+import * as bcrypt from 'bcrypt';
 import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/entities/user.entity';
-import * as bcrypt from 'bcrypt';
+import { UsersService } from 'src/users/users.service';
 import { ChatService } from 'src/chat/chat.service';
+import { User } from 'src/entities/user.entity';
 import { Chat } from 'src/entities/chat.entity';
+import { Message } from 'src/entities/message.entity';
 
 @Injectable()
 export class AuthService {
@@ -29,12 +30,20 @@ export class AuthService {
           ? this.chatService.createChat(user.username)
           : this.chatService.findChat();
       }
+      const chatWithNoMessages = {};
+      for (const key in chat) {
+        if (key !== 'messages') {
+          chatWithNoMessages[key] = chat[key];
+        } else {
+          chatWithNoMessages[key] = chat[key].slice(-10);
+        }
+      }
       const payload = { id: user.id, username: user.username };
       user.isLoggedIn = true;
       const jwtToken: string = await this.jwtService.signAsync(payload);
       return {
         access_token: jwtToken,
-        chat: chat,
+        chat: chatWithNoMessages,
       };
     } catch (error) {
       throw error;

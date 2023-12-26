@@ -6,18 +6,6 @@ export class CreateChatDTO {
   ownerUsername: string;
 }
 
-// export class JoinChatDTO {
-//   @IsNotEmpty()
-//   @IsString()
-//   peerUsername: string;
-// }
-
-// export class KickOutFromChatDTO {
-//   @IsNotEmpty()
-//   @IsString()
-//   peerUsername: string;
-// }
-
 export class UpdateChatDTO {
   @IsNotEmpty()
   @IsString()
@@ -37,9 +25,8 @@ export class CreateMessageDTO {
   @IsString()
   content: string;
 
-  @IsNotEmpty()
   @IsString()
-  chatId: string;
+  chatId?: string;
 }
 
 export class UpdateMessageDTO {
@@ -52,12 +39,27 @@ export class UpdateMessageDTO {
   chatId: string;
 }
 
-export class FindMessagesRangeDTO {
+export class GetMessagesRangeDTO {
   @IsNotEmpty()
   @IsPositive()
   from: number;
 
-  @IsNotEmpty()
   @IsPositive()
-  next: number;
+  next: number = 50;
+}
+
+export class SetSeenByDTO {
+  @IsNotEmpty()
+  @IsString()
+  messageId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+}
+
+export class KickOutDTO {
+  @IsNotEmpty()
+  @IsString()
+  kickUsername: string;
 }

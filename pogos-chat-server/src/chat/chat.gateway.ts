@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+import { Server, Socket } from 'socket.io';
+import { UseGuards } from '@nestjs/common';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -8,20 +11,20 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { ChatService } from './chat.service';
+import { WsGuard } from 'src/auth/auth.guard';
 import {
   // CreateChatDTO,
   CreateMessageDTO,
-  FindMessagesRangeDTO,
+  GetMessagesRangeDTO,
+  SetSeenByDTO,
   // JoinChatDTO,
   // KickOutFromChatDTO,
-  UpdateChatDTO,
+  // UpdateChatDTO,
 } from './chat.dto';
-import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
-import { WsGuard } from 'src/auth/auth.guard';
 import { WsAuthData } from 'src/auth/auth.dto';
-import * as dotenv from 'dotenv';
+import { ChatService } from './chat.service';
+import { getChat } from 'src/entities/chat.entity';
+import { Message } from 'src/entities/message.entity';
 
 dotenv.config();
 
@@ -33,120 +36,79 @@ dotenv.config();
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  private readonly logger = new Logger(ChatGateway.name);
   constructor(private readonly chatService: ChatService) {}
 
   @WebSocketServer() wsServer: Server;
 
   afterInit() {
-    this.logger.log('Initialized');
+    console.log('Initialized');
   }
 
   @UseGuards(WsGuard)
+  @SubscribeMessage('connected')
   handleConnection(
     @MessageBody() payload: WsAuthData,
     @ConnectedSocket() client: Socket,
-  ) {
+  ): string {
     const { sockets } = this.wsServer.sockets;
 
-    console.log('connected socket', client);
-    console.log('sockets', sockets);
+    console.log(`sockets: ${sockets}`);
+    console.log(`payload: ${payload}`);
+    console.log(`connected socket: ${client}`);
+    console.log(`payload.auth: ${payload.auth}`);
 
-    this.logger.log(
-      `Client username: ${payload.username} id: ${payload.id} jwt: ${payload.jwtToken} connected`,
+    console.log(
+      `Client username: ${payload.auth.username} jwt: ${payload.auth.jwtToken} connected`,
     );
-    this.logger.debug(`Number of connected clients: ${sockets.size}`);
-    this.wsServer.emit('connected', payload.username);
-    return this.chatService.joinChat(payload.username);
-  }
-
-  @UseGuards(WsGuard)
-  handleDisconnect(payload: WsAuthData) {
-    this.logger.log(
-      `Client username: ${payload.username} id: ${payload.id} jwt: ${payload.jwtToken} disconnected`,
-    );
-    this.wsServer.emit('disconnected', payload.username);
-    return this.chatService.kickOut(payload.username);
+    console.log(`Number of connected clients: ${sockets.size}`);
+    // this.wsServer.emit('connected', payload.auth.username);
+    return this.chatService.joinChat(payload.auth.username);
   }
 
   // @UseGuards(WsGuard)
-  // @SubscribeMessage('createChat')
-  // createChat(
-  //   @MessageBody() chat: CreateChatDTO,
-  //   // @ConnectedSocket() client: Socket,
-  // ) {
-  //   this.wsServer.emit('createChat', chat);
-  //   return this.chatService.createChat(chat.ownerUsername);
-  // }
-
-  // @SubscribeMessage('joinChat')
-  // joinChat(@MessageBody() joinPayload: JoinChatDTO) {
-  //   return this.chatService.joinChat(joinPayload.peerUsername);
-  // }
-
-  // @SubscribeMessage('kickOut')
-  // kickOutFromChat(@MessageBody() kickPayload: KickOutFromChatDTO) {
-  //   return this.chatService.kickOut(kickPayload.peerUsername);
-  // }
-
-  // @SubscribeMessage('findAllChats')
-  // findAllChats() {
-  //   return this.chatService.findAllChats();
-  // }
-
-  @UseGuards(WsGuard)
-  @SubscribeMessage('findChat')
-  findOneChat() {
-    return this.chatService.findChat();
+  @SubscribeMessage('disconnected')
+  handleDisconnect(payload: WsAuthData): string {
+    console.log(
+      `Client username: ${payload.auth.username} jwt: ${payload.auth.jwtToken} disconnected`,
+    );
+    // this.wsServer.emit('disconnected', payload.auth.username);
+    return this.chatService.kickOut(payload.auth.username);
   }
 
-  @UseGuards(WsGuard)
-  @SubscribeMessage('updateChat')
-  updateChat(
-    @MessageBody() chat: UpdateChatDTO,
-    // @ConnectedSocket() client: Socket,
-  ) {
-    this.wsServer.emit('updateChat', chat);
-    return this.chatService.updateChat(chat.ownerUsername);
-  }
-
-  // @SubscribeMessage('removeChat')
-  // removeChat(@MessageBody() id: string) {
-  //   return this.chatService.removeChat(id);
+  // @UseGuards(WsGuard)
+  // @SubscribeMessage('findChat')
+  // findOneChat(@ConnectedSocket() client: Socket) {
+  //   client.emit('findChat', this.chatService.findChat());
+  //   return this.chatService.findChat();
   // }
 
-  @UseGuards(WsGuard)
+  // @UseGuards(WsGuard)
   @SubscribeMessage('sendMessage')
-  createMessage(
-    @MessageBody() message: CreateMessageDTO,
-    // @ConnectedSocket() client: Socket,
-  ) {
-    this.wsServer.emit('sendMessage', message);
+  createMessage(@MessageBody() message: CreateMessageDTO): Message {
+    // this.wsServer.emit('sendMessage', message);
     return this.chatService.sendMessage(
       message.senderUsername,
       message.content,
-      message.chatId,
+      message.chatId ? message.chatId : getChat().id,
     );
   }
 
-  @UseGuards(WsGuard)
-  @SubscribeMessage('findMessages')
-  findAllMessages(@MessageBody() nextN: FindMessagesRangeDTO) {
-    return this.chatService.findMessages(nextN.from, nextN.next);
+  // @UseGuards(WsGuard)
+  @SubscribeMessage('getMessages')
+  findAllMessages(
+    @MessageBody() nextN: GetMessagesRangeDTO,
+    @ConnectedSocket() client: Socket,
+  ): void {
+    client.emit(
+      'getMessages',
+      this.chatService.getMessages(nextN.from, nextN.next),
+    );
+    // return this.chatService.getMessages(nextN.from, nextN.next);
   }
 
-  // @SubscribeMessage('findOneMessage')
-  // findOneMessage(@MessageBody() id: string) {
-  //   return this.chatService.findOneMessage(id);
-  // }
-
-  // @SubscribeMessage('updateMessage')
-  // updateMessage(@MessageBody() message: Message) {
-  //   return this.chatService.updateMessage(message.id, message);
-  // }
-
-  // @SubscribeMessage('removeMessage')
-  // removeMessage(@MessageBody() id: string) {
-  //   return this.chatService.removeMessage(id);
-  // }
+  @SubscribeMessage('seenBy')
+  setSeenBy(@MessageBody() seenBy: SetSeenByDTO): boolean {
+    // this.wsServer.emit('seenBy', {seenBy.messageId, seenBy.username});
+    return this.chatService.setSeen(seenBy.messageId, seenBy.username);
+  }
 }
