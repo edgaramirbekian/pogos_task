@@ -61,7 +61,7 @@ export class SetSeenByDTO {
 export class KickOutDTO {
   @IsNotEmpty()
   @IsString()
-  kickUsername: string;
+  kickOutUsername: string;
 
   @IsNotEmpty()
   @IsString()

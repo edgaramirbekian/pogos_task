@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import ChatComponent from './ChatComponent';
 import AuthComponent from './AuthComponent';
 import { Chat } from '../serverObjTypes/serverObjTypes';
 import { logOutReq } from '../services/serverRequests';
+import ChatProvider from './ChatProvider';
 
 interface LayoutProps {
 }
@@ -25,7 +25,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
   }
 
   if(token) {
-    return <ChatComponent authToken={token} chat={chat} username={username} logout={async () => await logout()}/>
+    return <ChatProvider authToken={token} chat={chat} username={username} logout={async () => await logout()}/>
   }
 
   return <AuthComponent setAuthToken={setToken} setChat={setChat} setUsername={setUsername} />

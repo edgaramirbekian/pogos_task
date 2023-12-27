@@ -1,113 +1,74 @@
-import { Socket } from 'socket.io-client';
 import React, { useState, useEffect } from 'react';
 import InputFieldComponent from './InputFieldComponent'; // Assuming you have this component
 import ButtonComponent from './ButtonComponent'; // Assuming you have this component
 import { Chat, Message } from '../serverObjTypes/serverObjTypes';
 import { wsConnect, wsDisconnect, wsRegisterMessageHandler, wsSendMessage, wsUnRegisterMessageHandler } from '../services/serverRequests';
+import { Socket } from 'socket.io-client';
 
 interface ChatProps {
-    authToken: string;
+    socket: Socket | null;
     chat: Chat | null;
-    username: string
-    logout: () => void;
+    sendMessage: (content: string) => void;
+    getNMessage: (from: number, next: number) => void;
+    seenBy: (messageId: string) => void;
+    kickOut: (kickOutUsername: string) => void;
   }
 
-const ChatComponent: React.FC<ChatProps> = ({authToken, chat, username, logout}) => {
-    const [socket, setSocket] = useState<Socket | null>(null);
+const ChatComponent: React.FC<ChatProps> = ({chat, socket, sendMessage, getNMessage, seenBy, kickOut}) => {
     const [message, setMessage] = useState<string>('');
-    const [chatMessages, setChatMessages] = useState<Array<Message>>([]);
-    const [peers, setPeers] = useState<Array<string>>([]);
+    const [chatMessages, setChatMessages] = useState<Array<Message>>(chat ? chat.messages : []);
+    const [peers, setPeers] = useState<Array<string>>(chat ? chat.peers : []);
 
     useEffect(() => {
         console.log(`UseEffect`);
-        const newSocket = wsConnect({auth: {jwtToken: authToken, username: username}});
 
-        wsRegisterMessageHandler(newSocket, 'connect', (username: string) => {
-            setPeers((prevPeers) => [...prevPeers, username]);
-        });
-        wsRegisterMessageHandler(newSocket, 'disconnect', (username: string) => {
-            setPeers((prevPeers) => prevPeers.filter((peerUsername) => peerUsername !== username));
-        });
-        wsRegisterMessageHandler(newSocket, 'sendMessage', (message: Message) => {
-            setChatMessages((prevMessages) => [...prevMessages, message]);
-        });
-        wsRegisterMessageHandler(newSocket, 'getMessages', (olderNMessages: Array<Message>) => {
-            setChatMessages((prevMessages) => [...prevMessages, ...olderNMessages]);
-        });
-        // wsRegisterMessageHandler(newSocket, 'seenBy', (isSuccess boolean) => {
-        //     setSeenBy((prevSeen) => [...prevSeen, username]);
-        // });
-        // wsRegisterMessageHandler(newSocket, 'kickOut', (isSuccess: boolean) => {
-        //     setPeers((prevPeers) => prevPeers.filter((peerUsername) => peerUsername !== kickOutUsername));
-        // });
+        setMessage('');
 
-        setSocket(newSocket);
-        if (chat) {
-            setChatMessages(chat.messages);
-            setPeers(chat.peers);
+        if(socket) {
+            wsRegisterMessageHandler(socket, 'connected', (username: string) => {
+                console.log('connected event received from server | peers', peers, 'add to peers', username)
+                if(!peers.includes(username)) {
+                    setPeers((prevPeers) => [...prevPeers, username]);
+                }
+            });
+            wsRegisterMessageHandler(socket, 'disconnected', (username: string) => {
+                console.log('disconnected event received from server | peers', peers, 'remove from peers', username)
+                setPeers((prevPeers) => prevPeers.filter((peerUsername) => peerUsername !== username));
+            });
+            wsRegisterMessageHandler(socket, 'sendMessage', (message: Message) => {
+                console.log('sendMessage event received from server | chatMessages', chatMessages, 'add to chatMessages', message)
+                setChatMessages((prevMessages) => [...prevMessages, message]);
+            });
+            wsRegisterMessageHandler(socket, 'getMessages', (olderNMessages: Array<Message>) => {
+                console.log('sendMessage event received from server | chatMessages', chatMessages, 'add to chatMessages', olderNMessages)
+                setChatMessages((prevMessages) => [...prevMessages, ...olderNMessages]);
+            });
+            // wsRegisterMessageHandler(newSocket, 'seenBy', (isSuccess boolean) => {
+            //     setSeenBy((prevSeen) => [...prevSeen, username]);
+            // });
+            // wsRegisterMessageHandler(newSocket, 'kickOut', (isSuccess: boolean) => {
+            //     setPeers((prevPeers) => prevPeers.filter((peerUsername) => peerUsername !== kickOutUsername));
+            // });
         }
 
         return () => {
-            if(newSocket) {
-                wsUnRegisterMessageHandler(socket, 'connect');
-                wsUnRegisterMessageHandler(socket, 'disconnect');
+            if(socket) {
+                wsUnRegisterMessageHandler(socket, 'connected');
+                wsUnRegisterMessageHandler(socket, 'disconnected');
                 wsUnRegisterMessageHandler(socket, 'sendMessage');
                 wsUnRegisterMessageHandler(socket, 'getMessages');
                 // wsUnRegisterMessageHandler(socket, 'seenBy');
                 // wsUnRegisterMessageHandler(socket, 'kickOut');
-                wsDisconnect(newSocket);
+                // wsDisconnect(socket);
             }
         };
-    }, []);
-
-    const sendMessage = () => {
-        if (socket && message.trim() !== '') {
-            const content = message;
-            console.log(`Send message: sendMessage to server | data: ${{username, content}}`);
-            wsSendMessage(socket, 'sendMessage', {username, content});
-            setMessage('');
-        }
-    }
-
-    const getNMessage = (from: number, nextQuantity: number) => {
-        if (socket) {
-            console.log(`Send message: getMessages to server | data: ${{from, nextQuantity}}`);
-            wsSendMessage(socket, 'getMessages', {from, nextQuantity})
-        }
-    };
-
-    const setSeen = (messageId: string) => {
-        if (socket) {
-            console.log(`Send message: seenBy to server | data: ${{messageId, username}}`);
-            wsSendMessage(socket, 'seenBy', {messageId, username})
-        }
-    };
-
-    const kickOut = (kickOutUsername: string) => {
-        if (socket && chat?.owner === username) {
-            console.log(`Send message: kickOut from server data: ${{kickOutUsername}}`);
-            wsSendMessage(socket, 'kickOut', {kickOutUsername})
-        }
-    };
-
-    const disconnectAndLogout = () => {
-        if (socket) {
-            wsUnRegisterMessageHandler(socket, 'connect');
-            wsUnRegisterMessageHandler(socket, 'disconnect');
-            wsUnRegisterMessageHandler(socket, 'sendMessage');
-            wsUnRegisterMessageHandler(socket, 'getMessages');
-            // wsUnRegisterMessageHandler(socket, 'seenBy');
-            // wsUnRegisterMessageHandler(socket, 'kickOut');
-            wsDisconnect(socket);
-            logout();
-        }
-    };
+    }, [chat, chatMessages, peers, socket]);
 
     return (
         <div>
             <div>
                 <div>
-                    <ButtonComponent label='Logout' handleOnClick={disconnectAndLogout} />
+                    <ButtonComponent label='Get older messages' handleOnClick={() => getNMessage(chatMessages.length, 50)} />
                     <hr/>
                 </div>
                 <div>
@@ -119,7 +80,7 @@ const ChatComponent: React.FC<ChatProps> = ({authToken, chat, username, logout})
                 <div>
                     <strong>Peers:</strong>
                     {peers.map((aPeer, index) => (
-                        <label key={index}>{" |"}{aPeer}</label>
+                        <label key={index}>{" | "}{aPeer}{" | "}</label>
                     ))}
                     <hr/>
                 </div>
@@ -130,6 +91,7 @@ const ChatComponent: React.FC<ChatProps> = ({authToken, chat, username, logout})
                     <div key={index}>
                         <div>
                             {aMessage.senderUsername}{": "}{aMessage.content}
+                            <br/>
                             <label>{aMessage.dateCreated.toString()}</label>
                         </div>
                         <br/>
@@ -146,7 +108,7 @@ const ChatComponent: React.FC<ChatProps> = ({authToken, chat, username, logout})
                         onChange={setMessage}
                         validate={() => {}}
                     />
-                    <ButtonComponent label='Send' handleOnClick={() => sendMessage()} />
+                    <ButtonComponent label='Send' handleOnClick={() => sendMessage(message)} />
                 </div>
             </div>
         </div>

@@ -113,7 +113,7 @@ export const wsSendMessage = (socket: Socket | null, message: string, messageDat
     try {
         if (socket && (wsMessages.includes(message) )) {
             console.log('ws send to server:', message, 'data', messageData);
-            socket.send(message, messageData);
+            socket.emit(message, messageData);
             return true;
         }
         return false;

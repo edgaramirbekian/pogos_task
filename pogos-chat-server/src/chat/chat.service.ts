@@ -49,7 +49,7 @@ export class ChatService {
     return messagesSlice;
   }
 
-  joinChat(peerUsername: string): boolean {
+  joinChat(peerUsername: string): string {
     const chat: Chat = getChat();
     if (!chat) {
       throw new WsException('Cant join a Chat that dont exist');
@@ -58,10 +58,10 @@ export class ChatService {
       chat.addPeer(peerUsername);
     }
     console.log('all peers in chat', chat.peers);
-    return true;
+    return peerUsername;
   }
 
-  kickOut(peerUsername: string): boolean {
+  kickOut(peerUsername: string): string {
     const chat: Chat = getChat();
     if (!chat || allUsers.has(peerUsername)) {
       throw new WsException(
@@ -69,10 +69,10 @@ export class ChatService {
       );
     }
     chat.removePeer(peerUsername);
-    return true;
+    return peerUsername;
   }
 
-  setSeen(messageId: string, username: string): boolean {
+  setSeen(messageId: string, username: string): any {
     const chat: Chat = getChat();
     if (!chat) {
       throw new WsException('No chat to find message in');
@@ -82,6 +82,6 @@ export class ChatService {
         return aMessage.setSeenBy(username);
       }
     });
-    return true;
+    return { username, messageId };
   }
 }

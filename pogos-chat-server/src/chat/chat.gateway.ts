@@ -57,7 +57,7 @@ export class ChatGateway
 
   // @UseGuards(WsGuard)
   @SubscribeMessage('connect')
-  async handleConnection(client: Socket): Promise<boolean> {
+  async handleConnection(client: Socket): Promise<any> {
     try {
       if (!(await this.wsGuard.canActivateWs(client))) {
         throw new WsException('Connection Refused: Authorization Failed');
@@ -69,15 +69,17 @@ export class ChatGateway
 
       console.log(`username: ${username}`);
       // const username = client.handshake.headers.username;
-      // this.wsServer.emit('connected', payload.auth.username);
-      return this.chatService.joinChat(username);
+      this.wsServer.emit('connected', this.chatService.joinChat(username));
+      // return this.chatService.joinChat(username);
+      return true;
     } catch (error) {
-      return error.getError();
+      console.log(error);
+      return false;
     }
   }
 
   @SubscribeMessage('disconnect')
-  handleDisconnect(client: Socket): boolean {
+  handleDisconnect(client: Socket): any {
     try {
       console.log(
         `Client token: ${client.handshake.headers.authorization} disconnect`,
@@ -89,10 +91,12 @@ export class ChatGateway
         typeof client.handshake.headers.username === 'string'
           ? client.handshake.headers.username
           : client.handshake.headers.username[0];
-      // this.wsServer.emit('disconnected', payload.auth.username);
-      return this.chatService.kickOut(username);
+      this.wsServer.emit('disconnected', this.chatService.kickOut(username));
+      // return this.chatService.kickOut(username);
+      return true;
     } catch (error) {
-      return error.getError();
+      console.log(error);
+      return false;
     }
   }
 
@@ -103,17 +107,34 @@ export class ChatGateway
   // }
 
   @SubscribeMessage('sendMessage')
-  createMessage(@MessageBody() message: CreateMessageDTO): Message {
+  createMessage(
+    @MessageBody() message: CreateMessageDTO,
+    @ConnectedSocket() client: Socket,
+  ): any {
     try {
-      console.log(`Received sendMessage from client | data: ${message}`);
-      // this.wsServer.emit('sendMessage', message);
-      return this.chatService.sendMessage(
-        message.senderUsername,
-        message.content,
-        message.chatId ? message.chatId : getChat().id,
+      console.log(
+        `Received sendMessage from client ${client.id} | data: ${message}`,
       );
+      console.log(`senderUsername: ${message.senderUsername}`);
+      console.log(`content: ${message.content}`);
+      console.log(`chatId: ${message.chatId ? message.chatId : getChat().id}`);
+      this.wsServer.emit(
+        'sendMessage',
+        this.chatService.sendMessage(
+          message.senderUsername,
+          message.content,
+          message.chatId ? message.chatId : getChat().id,
+        ),
+      );
+      // return this.chatService.sendMessage(
+      //   message.senderUsername,
+      //   message.content,
+      //   message.chatId ? message.chatId : getChat().id,
+      // );
+      return true;
     } catch (error) {
-      return error.getError();
+      console.log(error);
+      return false;
     }
   }
 
@@ -126,24 +147,31 @@ export class ChatGateway
       console.log(
         `Received getMessages from client: ${client} | data: ${messageRange}`,
       );
+      console.log(`from: ${messageRange.from}`);
+      console.log(`next: ${messageRange.next}`);
       client.emit(
         'getMessages',
         this.chatService.getMessages(messageRange.from, messageRange.next),
       );
       // return this.chatService.getMessages(nextN.from, nextN.next);
     } catch (error) {
-      return error.getError();
+      console.log(error);
     }
   }
 
   @SubscribeMessage('seenBy')
-  setSeenBy(@MessageBody() seenBy: SetSeenByDTO): boolean {
+  setSeenBy(@MessageBody() seenBy: SetSeenByDTO): any {
     try {
       console.log(`Received seenBy from client | data: ${seenBy}`);
-      // this.wsServer.emit('seenBy', {seenBy.messageId, seenBy.username});
-      return this.chatService.setSeen(seenBy.messageId, seenBy.username);
+      this.wsServer.emit(
+        'seenBy',
+        this.chatService.setSeen(seenBy.messageId, seenBy.username),
+      );
+      // return this.chatService.setSeen(seenBy.messageId, seenBy.username);
+      return true;
     } catch (error) {
-      return error.getError();
+      console.log(error);
+      return false;
     }
   }
 
@@ -151,7 +179,7 @@ export class ChatGateway
   async kickOut(
     client: Socket,
     @MessageBody() kickOutData: KickOutDTO,
-  ): Promise<boolean> {
+  ): Promise<any> {
     try {
       console.log(
         `Received kickOut from client: ${client} | data: ${kickOutData}`,
@@ -165,11 +193,13 @@ export class ChatGateway
       ) {
         throw new WsException('Connection Refused: Authorization Failed');
       }
-      const username: string = kickOutData.kickUsername;
-      // this.wsServer.emit('disconnected', payload.auth.username);
-      return this.chatService.kickOut(username);
+      const username: string = kickOutData.kickOutUsername;
+      this.wsServer.emit('kickOut', this.chatService.kickOut(username));
+      // return this.chatService.kickOut(username);
+      return true;
     } catch (error) {
-      return error.getError();
+      console.log(error);
+      return false;
     }
   }
 }
