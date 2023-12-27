@@ -1,6 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 import { Chat, getChat } from 'src/entities/chat.entity';
 import { Message } from 'src/entities/message.entity';
+import { allUsers } from 'src/entities/user.entity';
 
 @Injectable()
 export class ChatService {
@@ -28,7 +30,7 @@ export class ChatService {
   ): Message {
     const chat: Chat = getChat();
     if (!chat) {
-      throw new ForbiddenException('There is no Chat');
+      throw new WsException('There is no Chat');
     }
     const message: Message = new Message(content, senderUsername, chatId);
     chat.addMessage(message);
@@ -38,7 +40,7 @@ export class ChatService {
   getMessages(from: number, next: number): Array<Message> {
     const chat: Chat = getChat();
     if (!chat) {
-      throw new ForbiddenException('There is no Chat');
+      throw new WsException('There is no Chat');
     }
     const messagesSlice: Array<Message> = chat.messages.slice(
       from,
@@ -47,28 +49,33 @@ export class ChatService {
     return messagesSlice;
   }
 
-  joinChat(peerUsername: string): string {
+  joinChat(peerUsername: string): boolean {
     const chat: Chat = getChat();
     if (!chat) {
-      throw new ForbiddenException('Cant join a Chat that dont exist');
+      throw new WsException('Cant join a Chat that dont exist');
     }
-    chat.addPeer(peerUsername);
-    return peerUsername;
+    if (!chat.peers.includes(peerUsername)) {
+      chat.addPeer(peerUsername);
+    }
+    console.log('all peers in chat', chat.peers);
+    return true;
   }
 
-  kickOut(peerUsername: string): string {
+  kickOut(peerUsername: string): boolean {
     const chat: Chat = getChat();
-    if (!chat) {
-      throw new ForbiddenException('Cant kick out from a Chat that dont exist');
+    if (!chat || allUsers.has(peerUsername)) {
+      throw new WsException(
+        'Cant kick out a User that dont exists or from a Chat that dont exist',
+      );
     }
     chat.removePeer(peerUsername);
-    return peerUsername;
+    return true;
   }
 
   setSeen(messageId: string, username: string): boolean {
     const chat: Chat = getChat();
     if (!chat) {
-      throw new ForbiddenException('Cant kick out from a Chat that dont exist');
+      throw new WsException('No chat to find message in');
     }
     chat.messages.map((aMessage) => {
       if (aMessage.id === messageId) {

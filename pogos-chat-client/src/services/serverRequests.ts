@@ -17,7 +17,6 @@ export const signUpReq = async (signUpData: SignInData): Promise<SignInResponseD
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(signUpData),
-            mode: 'cors',
           };
         const response = await fetch(signUpEndpoint, request);
         const successData: SignInResponseData = await response.json();
@@ -39,7 +38,6 @@ export const signInReq = async (signinData: SignInData): Promise<SignInResponseD
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(signinData),
-            mode: 'cors',
           };
         const response = await fetch(signInEndpoint, request);
         const successData: SignInResponseData = await response.json();
@@ -61,7 +59,6 @@ export const logOutReq = async (): Promise<boolean | null> => {
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
             },
-            mode: 'cors',
           };
         const response = await fetch(signInEndpoint, request);
         const successData: boolean = await response.json();
@@ -77,7 +74,18 @@ export const logOutReq = async (): Promise<boolean | null> => {
 
 export const wsConnect = (wsAuthData: WsAuthData): Socket | null => {
     try {
-        const socket: Socket = io(wsServerEndpoint, wsAuthData);
+        const socketOptions = {
+            transportOptions: {
+                polling: {
+                    extraHeaders: {
+                        authorization: wsAuthData.auth.jwtToken, // 'Bearer h93t4293t49jt34j9rferek...'
+                        username: wsAuthData.auth.username,
+                    }
+                }
+            }
+        };
+        const socket: Socket = io(wsServerEndpoint, socketOptions);
+        console.log('ws connect:', socket);
         return socket;
     } catch (error) {
         console.log('ws connection failure error:', error);
@@ -88,6 +96,7 @@ export const wsConnect = (wsAuthData: WsAuthData): Socket | null => {
 export const wsDisconnect = (socket: Socket): boolean => {
     try {
         if (socket) {
+            console.log('ws disconnect:', socket);
             socket.disconnect();
             return true;
         }
@@ -102,7 +111,8 @@ const wsMessages: Array<string> = ['connected', 'disconnected', 'sendMessage', '
 
 export const wsSendMessage = (socket: Socket | null, message: string, messageData: any): boolean => {
     try {
-        if (socket && (message in wsMessages)) {
+        if (socket && (wsMessages.includes(message) )) {
+            console.log('ws send to server:', message, 'data', messageData);
             socket.send(message, messageData);
             return true;
         }
@@ -118,9 +128,23 @@ export const wsRegisterMessageHandler = (socket: Socket | null, message: string,
     try {
         if (socket) {
             socket.on(message, (data) => {
-                console.log(`Received message: ${message} from server data: ${data}`);
-                return wsMessageHandler(data)
+                console.log(`Received message: ${message} from server | data: ${data}`);
+                wsMessageHandler(data);
+                return true
               });
+        }
+        return false;
+    } catch (error) {
+        console.log('ws message handle failure error:', error);
+        return false;
+    }
+}
+
+export const wsUnRegisterMessageHandler = (socket: Socket | null, message: string): any => {
+    try {
+        if (socket) {
+            socket.off(message);
+            return true;
         }
         return false;
     } catch (error) {

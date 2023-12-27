@@ -62,4 +62,8 @@ export class KickOutDTO {
   @IsNotEmpty()
   @IsString()
   kickUsername: string;
+
+  @IsNotEmpty()
+  @IsString()
+  ownerAuth: string;
 }

@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { WsAuthData } from './auth.dto';
 import { User, allUsers } from 'src/entities/user.entity';
 import { getChat } from 'src/entities/chat.entity';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -58,36 +59,108 @@ export class WsGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       console.log('WsGuard');
-      const wsReq: WsAuthData = context.switchToWs().getData<WsAuthData>();
+      // const wsReq: WsAuthData = context.switchToWs().getData<WsAuthData>();
       const client: Socket = context.switchToWs().getClient<Socket>();
-      console.log('WsGuard wsReq:', client.handshake);
-      const query = client.handshake.query;
-      const token: string = client.handshake.auth.jwtToken;
-      console.log('WsGuard query:', query);
-      console.log('WsGuard wsReq:', wsReq);
-      console.log('WsGuard client:', client);
-      console.log('WsGuard token:', token);
-      const jwtToken: string = wsReq.auth.jwtToken;
+      const jwtToken: string = client.handshake.headers.authorization;
+      // const username: string | string[] = client.handshake.headers.username;
+      // const event: string | string[] = client.handshake.headers.event;
+
+      // const query = client.handshake.query;
+      // const token: string | string[] = client.handshake.query.token;
+
+      // const jwtToken: string = wsReq.auth.jwtToken;
+      // const clientUsername: string = wsReq.auth.username;
+
       console.log('WsGuard jwtToken:', jwtToken);
-      const clientUsername: string = wsReq.auth.username;
       // const chatId: string = wsReq.chatId;
       const payload = await this.jwtService.verifyAsync(jwtToken, {
         secret: process.env.JWT_KEY,
       });
       if (allUsers.has(payload.username)) {
         const user: User = allUsers.get(payload.username);
-        if (user.username == clientUsername) {
-          return true;
-        } else if (
-          wsReq.auth.event &&
-          wsReq.auth.event == 'disconnect' &&
-          getChat() &&
-          getChat().owner == user.username
-        ) {
+        if (user) {
+          // if (
+          //   event &&
+          //   event == 'kickOut' &&
+          //   username &&
+          //   allUsers.has(username) &&
+          //   getChat() &&
+          //   getChat().owner == user.username
+          // ) {
+          //   return true;
+          // }
           return true;
         }
+        // if (user.username == clientUsername) {
+        //   return true;
+        // } else if (
+        //   wsReq.auth.event &&
+        //   wsReq.auth.event == 'disconnect' &&
+        //   getChat() &&
+        //   getChat().owner == user.username
+        // ) {
+        //   return true;
+        // }
       }
       throw new UnauthorizedException();
+    } catch (ex) {
+      console.log(ex);
+      return false;
+    }
+  }
+
+  async canActivateWs(
+    client: Socket,
+    jwtAuth: string = '',
+    event: string = '',
+  ): Promise<boolean> {
+    try {
+      // const wsReq: WsAuthData = context.switchToWs().getData<WsAuthData>();
+      // const client: Socket = context.switchToWs().getClient<Socket>();
+      const jwtToken: string = client
+        ? client.handshake.headers.authorization
+        : jwtAuth
+          ? jwtAuth
+          : '';
+      // const username: string | string[] = client.handshake.headers.username;
+      // const event: string | string[] = client.handshake.headers.event;
+
+      // const query = client.handshake.query;
+      // const token: string | string[] = client.handshake.query.token;
+
+      // const jwtToken: string = wsReq.auth.jwtToken;
+      // const clientUsername: string = wsReq.auth.username;
+
+      console.log('WsGuard ws jwtToken:', jwtToken);
+      // const chatId: string = wsReq.chatId;
+      const payload = await this.jwtService.verifyAsync(jwtToken, {
+        secret: process.env.JWT_KEY,
+      });
+      if (allUsers.has(payload.username)) {
+        const user: User = allUsers.get(payload.username);
+        if (user) {
+          if (
+            event &&
+            event == 'kickOut' &&
+            getChat() &&
+            getChat().owner == user.username
+          ) {
+            return true;
+          }
+          return true;
+        }
+        // if (user.username == clientUsername) {
+        //   return true;
+        // } else if (
+        //   wsReq.auth.event &&
+        //   wsReq.auth.event == 'disconnect' &&
+        //   getChat() &&
+        //   getChat().owner == user.username
+        // ) {
+        //   return true;
+        // }
+      }
+      throw new WsException('Unauthorized');
     } catch (ex) {
       console.log(ex);
       return false;
